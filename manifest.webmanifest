@@ -1,7 +1,7 @@
 {
-  "name": "Qwixx",
+  "name": "Spielebox – Qwixx",
   "short_name": "Qwixx",
-  "description": "Qwixx-Würfelspiel – allein oder online mit Freunden",
+  "description": "Qwixx als Solo-Würfelspiel",
   "lang": "de",
   "start_url": "./index.html",
   "scope": "./",
