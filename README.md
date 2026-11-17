@@ -2,17 +2,23 @@
 
 ## Einrichten
 1. Auf supabase.com ein kostenloses Projekt anlegen.
-2. Project Settings → API: **Project URL** und **anon public key** kopieren.
-3. Beide in `config.js` eintragen.
-4. Ordner auf einen HTTPS-Webserver legen (z. B. GitHub Pages, Netlify, Cloudflare Pages).
+2. Project Settings → API: **Project URL** und **publishable/anon key** kopieren.
+3. Beide in `config.js` eintragen (ist bereits ausgefüllt).
+4. Den ganzen Ordner auf einen HTTPS-Webserver legen (z. B. GitHub Pages, Netlify, Cloudflare Pages).
 5. Auf dem iPhone in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
 Es werden keine Tabellen und kein SQL gebraucht. Der Online-Modus nutzt nur
-Supabase Realtime (Presence). Der anon-Key ist öffentlich vorgesehen.
+Supabase Realtime (Presence). Der Key ist öffentlich vorgesehen.
 
 ## Spielen
-Personen-Icon unten antippen, Namen eingeben, einer erstellt einen Raum und
-gibt den Code weiter, die anderen treten mit demselben Code bei.
+- Solo: Würfeln, Felder antippen. Der Spielstand bleibt gespeichert.
+- Mehrspieler: Personen-Icon antippen, Namen eingeben. Einer tippt „Neuer Raum“
+  und gibt den Code weiter, alle anderen geben denselben Code ein und tippen „Beitreten“.
+  Nur wer gewürfelt hat, tippt „Fertig“, dann würfelt der Nächste.
+  Wer rausfliegt oder die App neu startet, kommt automatisch wieder in den Raum.
+  Jeder sieht nur seine eigenen Würfel, die weiße Summe steht am Namen.
+- Einstellungen: Design, Sprachansagen, Regeln prüfen.
 
-Hinweis: Nach einer Änderung an `config.js` oder anderen Dateien in `sw.js`
-die Zahl bei `CACHE` erhöhen, sonst zeigt die PWA die alte Version.
+## Update
+Die Build-Nummer steht in den Einstellungen. Nach jeder Änderung an einer Datei in `sw.js` die Zahl bei `CACHE` erhöhen,
+sonst zeigt die PWA die alte Version.
