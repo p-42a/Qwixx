@@ -7,8 +7,14 @@
 4. Den ganzen Ordner auf einen HTTPS-Webserver legen (z. B. GitHub Pages, Netlify, Cloudflare Pages).
 5. Auf dem iPhone in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
-Es werden keine Tabellen und kein SQL gebraucht. Der Online-Modus nutzt nur
-Supabase Realtime (Presence). Der Key ist öffentlich vorgesehen.
+6. Einmalig: In Supabase links auf **SQL Editor** → **New query**, den Inhalt von
+   `supabase.sql` einfügen und **Run** tippen. Das legt die Tabelle `qwixx_rooms` an.
+
+Mit der Tabelle wird der Spielstand jedes Raums (Würfe, Zugfolge, „Fertig“) auf dem
+Server gespeichert. Wer kurz die Verbindung verliert, holt sich danach den genauen
+Stand – es geht kein Wurf verloren. Ohne Tabelle läuft das Spiel trotzdem, nur
+weniger robust. Der Key ist öffentlich vorgesehen; jeder mit dem Raumcode kann den
+Raum benutzen.
 
 ## Spielen
 - Solo: Würfeln, Felder antippen. Der Spielstand bleibt gespeichert.

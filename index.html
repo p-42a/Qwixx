@@ -134,7 +134,7 @@ button{font-family:inherit;color:inherit}
 .vrow{display:flex;justify-content:space-between;align-items:center;padding:0 3cqw;min-height:8.6cqh;border-top:.15cqh solid var(--al-hair);font-size:3.6cqh;text-align:left}
 .vrow small{opacity:.55;font-size:2.8cqh;margin-left:1.2cqw}.vrow:active{background:rgba(120,120,128,.2)}
 #mpbar{display:flex;flex-wrap:wrap;gap:.6cqh .8cqw;justify-content:center;max-width:100%}
-.mpc{font-size:2.5cqh;background:var(--chip);border-radius:99cqh;padding:.5cqh 1.3cqw;white-space:nowrap}.mpc.me{font-weight:700}.mpc.act{background:#0a84ff;color:#fff}.mpc.warn{background:#ff9f0a;color:#000;font-weight:700}
+.mpc{font-size:2.5cqh;background:var(--chip);border-radius:99cqh;padding:.5cqh 1.3cqw;white-space:nowrap}.mpc.me{font-weight:700}.mpc.act{background:#0a84ff;color:#fff}
 #app.mp .btn{height:8cqh}
 .mpin{display:block;width:100%;margin-top:1.6cqh;padding:1.3cqh 2cqw;font-family:inherit;font-size:3.6cqh;border-radius:1.4cqh;border:.15cqh solid var(--al-hair);background:var(--al-seg);color:var(--al-txt);text-align:center;-webkit-user-select:text;user-select:text}
 #mp p{margin-top:1.2cqh}#mpList{margin-top:1.2cqh;max-height:28cqh;overflow-y:auto}#rank{margin-top:1.2cqh;max-height:30cqh;overflow-y:auto}
@@ -183,7 +183,7 @@ button{font-family:inherit;color:inherit}
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script>
-const APP_VERSION="1.3.0",APP_BUILD=67;
+const APP_VERSION="1.4.0",APP_BUILD=71;
 const COLORS=["red","yellow","green","blue"];
 const NUMS=[[2,3,4,5,6,7,8,9,10,11,12],[2,3,4,5,6,7,8,9,10,11,12],[12,11,10,9,8,7,6,5,4,3,2],[12,11,10,9,8,7,6,5,4,3,2]];
 let cfg={sound:true,check:false};
@@ -270,7 +270,7 @@ function finish(){if(S.over)return;
   document.getElementById("over").classList.add("on");mpRank();
 }
 function newGame(){
-  fresh();MP.seen=0;MP.done=0;MP.lastI=0;MP.lastBy="";if(MP.on){MP.last="";try{MP.room.presence({r:null,d:null,s:0,p:0,l:[0,0,0,0],o:0}).catch(()=>{})}catch(e){}}document.getElementById("over").classList.remove("on");
+  fresh();MP.seen=0;MP.done=0;MP.lastI=0;MP.lastBy="";if(MP.db&&+MP.db.g!==MP.g)MP.db=null;if(MP.on){MP.last="";try{MP.room.presence({r:null,d:null,s:0,p:0,l:[0,0,0,0],o:0}).catch(()=>{})}catch(e){}}document.getElementById("over").classList.remove("on");
   render();
 }
 document.getElementById("board").addEventListener("click",e=>{const lk=e.target.closest(".lock");if(lk){if(S.over||S.phase==="rolling")return;const lr=+lk.dataset.r;if(S.locked[lr]||closedO(lr)){return}S.closed[lr]=!S.closed[lr];say(FARBW[lr]+(S.closed[lr]?" geschlossen":" wieder offen"));checkEnd();return}const b=e.target.closest(".n");if(!b||b.disabled)return;const r=+b.dataset.r,p=+b.dataset.p;if(b.classList.contains("done")){undo(r,p);return}if(!S.rolled)return;const t=can(r,p)?(cfg.check?diceType(r,p):"f"):null;if(t)mark(r,p,t);else{b.classList.remove("bad");void b.offsetWidth;b.classList.add("bad")}});
@@ -292,17 +292,20 @@ document.getElementById("setClose").onclick=()=>document.getElementById("setting
 setTheme(theme);document.getElementById("ver").textContent="Version "+APP_VERSION+" · Build "+APP_BUILD;
 [["cSound","sound"],["cCheck","check"]].forEach(([id,k])=>{const e=document.getElementById(id);e.checked=cfg[k];e.onchange=()=>{cfg[k]=e.checked;saveCfg();if(k==="sound"&&e.checked)speakWhite(3,5)}});
 function restart(){if(MP.on)mpNewAll();else newGame()}
-function mpNewAll(){MP.g=Date.now();try{MP.room.presence({g:MP.g,r:null}).catch(()=>{})}catch(e){}newGame()}
+function mpNewAll(){MP.g=Date.now();MP.db=null;mpDb({g:MP.g,seq:0,roller:"",v:null,done:0});try{MP.room.presence({g:MP.g,r:null}).catch(()=>{})}catch(e){}newGame()}
 function mpMyTurn(){if(!MP.on)return true;const a=mpActive();return !!(a&&a.isMe)}
 function mpSorted(){return mpPeers().slice().sort((a,b)=>a.peer<b.peer?-1:1)}
 function mpActive(){const ps=mpSorted();if(!ps.length)return null;let last=null,mx=0;ps.forEach(p=>{const r=p.presence.r;if(r&&r.g===MP.g&&r.i>mx){mx=r.i;last=p}});if(last&&mx>=MP.lastI){MP.lastI=mx;MP.lastBy=last.peer}else if(MP.lastBy){return ps.find(p=>p.peer>MP.lastBy)||ps[0]}if(!last)return ps[0];return ps[(ps.indexOf(last)+1)%ps.length]}
 function mpRoller(){return mpPeers().find(p=>p.peer===MP.lastBy)||null}
-function mpAllDone(){const q=mpMaxSeq();if(q===0)return true;const ro=mpRoller();if(!ro)return true;if(ro.isMe)return MP.done>=q;const d=ro.presence.d;return !!(d&&d.g===MP.g&&d.i>=q)}
-function mpWhite(p){const r=p.presence.r;return r&&r.g===MP.g&&Array.isArray(r.v)?(r.v[0]|0)+(r.v[1]|0):0}
+function mpAllDone(){const q=mpMaxSeq();if(q===0)return true;if(MP.db&&+MP.db.g===MP.g&&+MP.db.seq===q&&+MP.db.done>=q)return true;const ro=mpRoller();if(!ro)return true;if(ro.isMe)return MP.done>=q;const d=ro.presence.d;return !!(d&&d.g===MP.g&&d.i>=q)}
+function mpWhite(p){if(MP.db&&+MP.db.g===MP.g&&p.peer===MP.db.roller&&Array.isArray(MP.db.v))return (MP.db.v[0]|0)+(MP.db.v[1]|0);const r=p.presence.r;return r&&r.g===MP.g&&Array.isArray(r.v)?(r.v[0]|0)+(r.v[1]|0):0}
 function mpNeedDone(){if(!MP.on||S.over||S.phase!=="idle"||!S.rolled)return false;const ro=mpRoller();return !!(ro&&ro.isMe)&&MP.done<mpMaxSeq()}
-function mpDone(){const q=mpMaxSeq();MP.done=q;try{MP.room.presence({d:{g:MP.g,i:q}}).catch(()=>{})}catch(e){}render()}
-function mpMaxSeq(){let m=Math.max(MP.seen,MP.lastI);mpPeers().forEach(p=>{const r=p.presence.r;if(r&&r.g===MP.g&&r.i>m)m=r.i});return m}
-function mpAnnounce(nd){const i=mpMaxSeq()+1;MP.seen=i;MP.lastI=i;const me=MP.room.peers().find(p=>p.isMe);if(me)MP.lastBy=me.peer;try{MP.room.presence({r:{g:MP.g,i:i,v:[nd.w1,nd.w2,...nd.c]}}).catch(()=>{})}catch(e){}}
+function mpDone(){const q=mpMaxSeq();MP.done=q;mpDb({g:MP.g,done:q});try{MP.room.presence({d:{g:MP.g,i:q}}).catch(()=>{})}catch(e){}render()}
+function mpMyKey(){const me=MP.room&&MP.room.peers().find(p=>p.isMe);return me?me.peer:""}
+function mpDb(patch){try{if(MP.room&&MP.room.setState)MP.room.setState(patch).catch(()=>{})}catch(e){}}
+function mpApplyDb(r){if(!r||!MP.on)return;const g=+r.g||0;if(g>MP.g){MP.g=g;newGame()}MP.db=r;if(g!==MP.g)return;const q=+r.seq||0;if(q>=MP.lastI&&r.roller){MP.lastI=q;MP.lastBy=r.roller}if(q>MP.seen){MP.seen=q;if(r.roller&&r.roller!==mpMyKey()&&Array.isArray(r.v)&&r.v.length===6&&!S.over){S.foreign=true;S.ext={w1:r.v[0]|0,w2:r.v[1]|0};S.rolled=true;S.turn=[];speakWhite(S.ext.w1,S.ext.w2)}}if(!S.over&&globalOver()){finish();return}render()}
+function mpMaxSeq(){let m=Math.max(MP.seen,MP.lastI,MP.db&&+MP.db.g===MP.g?+MP.db.seq||0:0);mpPeers().forEach(p=>{const r=p.presence.r;if(r&&r.g===MP.g&&r.i>m)m=r.i});return m}
+function mpAnnounce(nd){const i=mpMaxSeq()+1;MP.seen=i;MP.lastI=i;const me=MP.room.peers().find(p=>p.isMe);if(me)MP.lastBy=me.peer;try{MP.room.presence({r:{g:MP.g,i:i,v:[nd.w1,nd.w2,...nd.c]}}).catch(()=>{})}catch(e){}mpDb({g:MP.g,seq:i,roller:MP.lastBy,v:[nd.w1,nd.w2,...nd.c],done:0})}
 function mpSync(){if(!MP.on)return;const l=S.locked.map(x=>x?1:0),t=total(),k=JSON.stringify([t,S.pen,l,S.over?1:0,MP.name,MP.g]);if(k===MP.last)return;MP.last=k;try{MP.room.presence({n:MP.name,s:t,p:S.pen,l:l,o:S.over?1:0,g:MP.g}).catch(()=>{})}catch(e){}}
 const mpEl=id=>document.getElementById(id);
 function mpRank(){const el=mpEl("rank");if(!MP.on){el.innerHTML="";return}el.innerHTML=mpPeers().slice().sort((a,b)=>(+b.presence.s||0)-(+a.presence.s||0)).map((p,i)=>'<div class="vrow"><span>'+(i+1)+'. '+esc(p.presence.n)+(p.isMe?" (du)":"")+'</span><span>'+(+p.presence.s||0)+'</span></div>').join("")}
@@ -313,10 +316,10 @@ function mpShow(){
 }
 function mpRender(){
   const bar=mpEl("mpbar");mpEl("app").classList.toggle("mp",MP.on);
-  if(!MP.on){bar.innerHTML=MP.joining?'<span class="mpc warn">Verbinde mit Raum …</span>':"";return}
+  if(!MP.on){bar.innerHTML="";return}
   mpSync();
   const act=mpActive(),ro=mpRoller(),hi=mpAllDone()?act:ro;
-  bar.innerHTML=(MP.room.connected&&!MP.room.connected()?'<span class="mpc warn">Verbindung wird wiederhergestellt …</span>':'')+mpSorted().map(p=>'<span class="mpc'+(hi&&hi.peer===p.peer?" act":"")+(p.isMe?" me":"")+'">'+esc(p.presence.n)+' '+(+p.presence.s||0)+(ro&&ro.peer===p.peer&&mpWhite(p)?' · Weiß '+mpWhite(p):'')+'</span>').join("");
+  bar.innerHTML=mpSorted().map(p=>'<span class="mpc'+(hi&&hi.peer===p.peer?" act":"")+(p.isMe?" me":"")+'">'+esc(p.presence.n)+' '+(+p.presence.s||0)+(ro&&ro.peer===p.peer&&mpWhite(p)?' · Weiß '+mpWhite(p):'')+'</span>').join("");
   const rb=mpEl("roll");if(mpNeedDone()){rb.textContent="Fertig";rb.disabled=false}else{rb.textContent="Würfeln";rb.disabled=rb.disabled||!(act&&act.isMe)||!mpAllDone()}if(MP.room.connected&&!MP.room.connected())rb.disabled=true;
   mpShow();if(S.over)mpRank();
 }
@@ -332,7 +335,9 @@ function sbApi(){
   const client=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_KEY,{realtime:{heartbeatIntervalMs:15000}});
   let myKey="";try{myKey=localStorage.getItem("qwixx-peer")||""}catch(e){}if(!myKey){myKey="p"+Math.random().toString(36).slice(2,10);try{localStorage.setItem("qwixx-peer",myKey)}catch(e){}}
   return {join:name=>new Promise((resolve,reject)=>{
-    let ch=null,handlers=[],cur={},prev=[],resolved=false,gone=false,retry=null;
+    let ch=null,handlers=[],cur={},prev=[],resolved=false,gone=false,retry=null,sh=[],dbOff=false,pgOff=false;const code=name.replace(/^qwixx-/,""),TB="qwixx_rooms";
+    const getState=async()=>{if(dbOff)return null;const r=await client.from(TB).select("*").eq("code",code).maybeSingle();if(r.error){if(/relation|does not exist|schema cache|not find/i.test(r.error.message||""))dbOff=true;throw r.error}return r.data};
+    const pull=()=>{getState().then(d=>{if(d)sh.forEach(h=>h(d))}).catch(()=>{})};
     const snap=()=>{const st=ch?ch.presenceState():{},out=[];let me=false;
       for(const k in st){const m=st[k][st[k].length-1];if(!m)continue;if(k===myKey)me=true;out.push({peer:k,isMe:k===myKey,kind:"viewer",presence:k===myKey?cur:(m.p||{})})}
       if(!me)out.push({peer:myKey,isMe:true,kind:"viewer",presence:cur});
@@ -345,17 +350,22 @@ function sbApi(){
       if(gone)return;const old=ch;if(old){try{client.removeChannel(old)}catch(e){}}
       try{if(!client.realtime.isConnected())client.realtime.connect()}catch(e){}
       const my=client.channel(name,{config:{presence:{key:myKey}}});ch=my;
-      my.on("presence",{event:"sync"},()=>{if(my===ch)notify()}).subscribe(async st=>{
+      my.on("presence",{event:"sync"},()=>{if(my===ch)notify()});
+      if(!dbOff&&!pgOff)my.on("postgres_changes",{event:"*",schema:"public",table:TB,filter:"code=eq."+code},pl=>{if(my===ch&&pl&&pl.new&&pl.new.code)sh.forEach(h=>h(pl.new))});
+      my.subscribe(async st=>{
         if(my!==ch||gone)return;
-        if(st==="SUBSCRIBED"){try{await my.track({p:cur})}catch(e){}if(!resolved){resolved=true;resolve(room)}notify()}
-        else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"){if(!resolved){resolved=true;gone=true;try{client.removeChannel(my)}catch(e){}reject(new Error(st));return}notify();later()}
+        if(st==="SUBSCRIBED"){try{await my.track({p:cur})}catch(e){}if(!resolved){resolved=true;resolve(room)}notify();pull()}
+        else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"){if(!resolved){if(!dbOff&&!pgOff){pgOff=true;connect();return}resolved=true;gone=true;try{client.removeChannel(my)}catch(e){}reject(new Error(st));return}notify();later()}
       })};
     const room={name,peers:()=>snap(),connected:()=>!!ch&&ch.state==="joined",
       reconnect:async()=>{if(gone)return;if(ch&&ch.state==="joined"){try{if(!client.realtime.isConnected())client.realtime.connect();await ch.track({p:cur})}catch(e){}}else if(!ch||ch.state!=="joining")connect();notify()},
       presence:async patch=>{for(const k in patch){if(patch[k]===null)delete cur[k];else cur[k]=patch[k]}if(ch&&ch.state==="joined")await ch.track({p:cur})},
       onPeers:h=>{handlers.push(h);return()=>{handlers=handlers.filter(x=>x!==h)}},
+      state:getState,
+      setState:async patch=>{if(dbOff)return;const r=await client.from(TB).upsert(Object.assign({code},patch,{updated_at:new Date().toISOString()}),{onConflict:"code"});if(r.error){if(/relation|does not exist|schema cache|not find/i.test(r.error.message||""))dbOff=true;throw r.error}},
+      onState:h=>{sh.push(h);return()=>{sh=sh.filter(x=>x!==h)}},
       leave:async()=>{gone=true;clearTimeout(retry);if(ch)await client.removeChannel(ch)}};
-    connect();
+    getState().catch(()=>{}).finally(connect);
   })};
 }
 async function mpApi(){
@@ -390,12 +400,13 @@ async function mpJoin(auto){
     fresh();Object.assign(S,sv.S);if(S.phase==="rolling")S.phase="idle";
     MP.unsub=[room.onPeers(mpOnPeers)];render();
   }else{MP.g=0;MP.seen=0;MP.unsub=[room.onPeers(mpOnPeers)];newGame()}
+  MP.db=null;if(room.onState){MP.unsub.push(room.onState(mpApplyDb));room.state().then(mpApplyDb).catch(()=>{})}
   return true;
 }
 function mpAuto(){if(MP.on||MP.joining)return;let o=null;try{o=JSON.parse(localStorage.getItem("qwixx-mp")||"null")}catch(e){}if(o&&o.code&&o.name)mpJoin(o).then(ok=>{if(!ok&&!MP.on)setTimeout(mpAuto,5000)})}
 async function mpLeave(){
   MP.unsub.forEach(f=>{try{f()}catch(e){}});try{await MP.room.leave()}catch(e){}
-  MP.on=false;MP.room=null;MP.unsub=[];try{localStorage.removeItem("qwixx-mp")}catch(e){}newGame();mpShow();
+  MP.on=false;MP.room=null;MP.db=null;MP.unsub=[];try{localStorage.removeItem("qwixx-mp")}catch(e){}newGame();mpShow();
 }
 mpEl("mpbtn").onclick=mpOpen;
 mpEl("mpClose").onclick=()=>mpEl("mp").classList.remove("on");

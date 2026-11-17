@@ -1,4 +1,4 @@
-const CACHE="qwixx-v67";
+const CACHE="qwixx-v71";
 const FILES=["./","config.js","index.html","manifest.webmanifest","icon-192.png","icon-512.png","apple-touch-icon.png","icon-maskable-512.png"]
 const EXTRA=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"];;
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES).then(()=>c.addAll(EXTRA).catch(()=>{}))).then(()=>self.skipWaiting()))});
